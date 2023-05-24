@@ -7,18 +7,18 @@ require 'uri'
 require 'dotenv'
 Dotenv.load
 
-telegram_token = ENV['YOUR_TELEGRAM_BOT_TOKEN'] # Токен Telegram Bot API
+TOKEN = ENV['YOUR_TELEGRAM_BOT_TOKEN'] # Токен Telegram Bot API
 
-yandex_speech_key = ENV['YOUR_YANDEX_SPEECH_KIT_API_KEY'] # API-ключ Яндекс Спечкит
+SPEECHKIT_API_KEY = ENV['YOUR_YANDEX_SPEECH_KIT_API_KEY'] # API-ключ Яндекс Спечкит
 
 # Преобразование голосового сообщения в текст с помощью Yandex Speechkit
-def convert_voice_to_text(voice_file_url, yandex_speech_key)
+def convert_voice_to_text(voice_file_url)
   uri = URI.parse('https://stt.api.cloud.yandex.net/speech/v1/stt:recognize')
   http = Net::HTTP.new(uri.host, uri.port)
   http.use_ssl = true
 
   request = Net::HTTP::Post.new(uri.path)
-  request['Authorization'] = "Api-Key #{yandex_speech_key}"
+  request['Authorization'] = "Api-Key #{SPEECHKIT_API_KEY}"
   request['Content-Type'] = 'audio/x-wav'
   request.body = Net::HTTP.get(URI(voice_file_url))
 
@@ -28,20 +28,20 @@ def convert_voice_to_text(voice_file_url, yandex_speech_key)
   if response.code == '200'
     return json_response['result']
   else
-    return 'Error: Speech recognition failed'
+    return 'Ошибка: не удалось распознать речь'
   end
 end
 
 # Инициализировать бот-клиент Telegram
-Telegram::Bot::Client.run(telegram_token) do |bot|
+Telegram::Bot::Client.run(TOKEN) do |bot|
   bot.listen do |message|
     if message.voice
       voice_file_id = message.voice.file_id
       voice_file = bot.api.get_file(file_id: voice_file_id)['result']
       voice_file_path = voice_file['file_path']
-      voice_file_url = "https://api.telegram.org/file/bot#{telegram_token}/#{voice_file_path}"
+      voice_file_url = "https://api.telegram.org/file/bot#{TOKEN}/#{voice_file_path}"
 
-      text = convert_voice_to_text(voice_file_url, yandex_speech_key)
+      text = convert_voice_to_text(voice_file_url)
 
       if text.empty?
         bot.api.send_message(chat_id: message.chat.id, text: "Ошибка: Не удалось распознать голосовое сообщение")
