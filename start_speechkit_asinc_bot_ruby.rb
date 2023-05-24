@@ -11,6 +11,25 @@ SPEECHKIT_API_KEY = ENV['YOUR_YANDEX_SPEECH_KIT_API_KEY'] # API-ключ Янд�
 BUCKET_NAME = ENV['YOUR_BUCKET_NAME'] # Название вашего Object Storage bucket
 
 
+# Загрузка файла в Object Storage
+def upload_to_object_storage(file_url)
+  response = HTTParty.put(
+    "https://storage.yandexcloud.net/#{BUCKET_NAME}/#{file_key}",
+    body: HTTParty.get(file_url).body
+  )
+
+  if response.code == 201
+    file_key
+  else
+    nil
+  end
+end
+
+# Получение URL файла из Object Storage
+def object_storage_file_url(file_key)
+  "https://storage.yandexcloud.net/#{BUCKET_NAME}/#{file_key}"
+end
+
 # Обработчик аудиосообщений
 def handle_audio_message(message, bot)
   file_id = message.audio.file_id
@@ -92,25 +111,6 @@ def handle_audio_message(message, bot)
     bot.api.send_message(chat_id: message.chat.id, text: recognized_text)
     puts "Ошибка при загрузке аудиофайла в Object Storage"
   end
-end
-
-# Загрузка файла в Object Storage
-def upload_to_object_storage(file_url)
-  response = HTTParty.put(
-    "https://storage.yandexcloud.net/#{BUCKET_NAME}/#{file_key}",
-    body: HTTParty.get(file_url).body
-  )
-
-  if response.code == 201
-    file_key
-  else
-    nil
-  end
-end
-
-# Получение URL файла из Object Storage
-def object_storage_file_url(file_key)
-  "https://storage.yandexcloud.net/#{BUCKET_NAME}/#{file_key}"
 end
 
 
